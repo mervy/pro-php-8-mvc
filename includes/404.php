@@ -1,0 +1,1 @@
+<img src="https://pdl.piib.org.pl/pliki/img/404error.png" alt="Not found" />
