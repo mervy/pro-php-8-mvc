@@ -1,0 +1,1 @@
+<img src="https://user-media-prod-cdn.itsre-sumo.mozilla.net/uploads/gallery/images/2020-02-24-15-26-31-cb5e10.png" alt="Bad request" />

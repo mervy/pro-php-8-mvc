@@ -9,29 +9,61 @@ function redirectForeverTo($path)
     exit;
 }
 
-if ($requestMethod === 'GET' and $requestPath === '/') {
-    print '
-<!doctype html>
-<html lang="en">
-<head>
-    <title>Title</title>   
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">    
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css"">
-</head>
-<body>  
-    <div class="container mt-5">
-        <h1>Hello World</h1>
-    </div>
+$routes = [
+    'GET' => [
+        '/' => fn () => print
+            <<<HTML
+        <body>Hello World</body>
+    HTML,
+        '/old-home' => fn () => redirectForeverTo('/'),
+        '/has-server-error' => fn () => throw new Exception(),
+        '/has-validation-error' => fn () => abort(400),
+    ],
+    'POST' => [],
+    'PATCH' => [],
+    'PUT' => [],
+    'DELETE' => [],
+    'HEAD' => [],
+    '404' => fn () => include(__DIR__ . '/includes/404.php'),
+    '400' => fn () => include(__DIR__ . '/includes/400.php'),
+    '500' => fn()=>include(__DIR__.'/includes/500.php'),
+];
 
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.5/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.min.js"></script>
-</body>
-</html>   
-    
-    ';
-} else if ($requestPath === '/old-home') {
-    redirectForeverTo('/');
+//this combines all the paths (for all request methods)
+//into a single array, so we can quickly see if a path
+//exists in any of them
+$paths =  array_merge(
+    array_keys($routes['GET']),
+    array_keys($routes['POST']),
+    array_keys($routes['PATCH']),
+    array_keys($routes['PUT']),
+    array_keys($routes['DELETE']),
+    array_keys($routes['HEAD']),
+);
+
+function abort($code){
+    global $routes;
+    $routes[$code]();
+}
+set_error_handler(function(){
+    abort(500);
+});
+set_exception_handler(function(){
+    abort(500);
+});
+
+if (isset(
+    $routes[$requestMethod],
+    $routes[$requestMethod][$requestPath],
+)) {
+    $routes[$requestMethod][$requestPath](); //Here have () because arrow functions (fn)
+} else if (in_array($requestPath, $paths)) {
+    //the path is defined, but not for this request method
+    //so we show a 400 error (which means "Bad Request")
+    $routes['400']();
 } else {
-    include(__DIR__ . '/includes/404.php');
+    //the path isn't allowed for any request method
+    //which probably means they tried a url that the
+    //application doesn't support
+    $routes['404']();
 }
